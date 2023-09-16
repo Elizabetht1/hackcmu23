@@ -26,6 +26,8 @@ LABELS = [
     "apply",
     "pay"
 ]
+DURATION_CACHE = {}
+LOCATION_CACHE = {}
 
 # example = "Go shopping for 2 hours at Giant Eagle on Wednesday."
 
@@ -110,30 +112,42 @@ def parse_task(text):
     # task_str = get_intent(text, [s.text for s in filter_spans(cand_spans) if not any([t.is_stop for t in s])])
     task_str = get_intent(text, LABELS)
     missing_info = []
-    if len(time) == 0:
-        # request for time duration
-        print("[INFO] Missing duration.")
-        missing_info.append("duration")
-    else:
-        for t in time:
-            idx = doc.text.split().index(t.text.split()[0])
-            if idx >= 1:
-                if doc[idx-1].text in ["at", "on", "from", "in"]:
-                    # start time
-                    start_time = t.text
-                elif doc[idx-1].text == "for":
-                    # duration
-                    duration = t.text
-                else:
-                    # deadline
-                    deadline = t.text
+    has_duration = False
+    
+    for t in time:
+        idx = doc.text.split().index(t.text.split()[0])
+        if idx >= 1:
+            if doc[idx-1].text in ["at", "on", "from", "in"]:
+                # start time
+                start_time = t.text
+            elif doc[idx-1].text == "for":
+                # duration
+                has_duration = True
+                duration = t.text
+                DURATION_CACHE[task_str] = duration
+            else:
+                # deadline
+                deadline = t.text
+
+    if has_duration == False:
+        if task_str in DURATION_CACHE:
+            duration = DURATION_CACHE[task_str]
+        else:
+            # request for time duration
+            print("[INFO] Missing duration.")
+            missing_info.append("duration")
+
     loc = [ent for ent in doc.ents if ent.label_ in ["GPE", "ORG"]]
     if len(loc) == 0:
-        # request for location
-        print("[INFO] Missing location.")
-        missing_info.append("location")
+        if task_str in LOCATION_CACHE:
+            location = LOCATION_CACHE[task_str]
+        else:
+            # request for location
+            print("[INFO] Missing location.")
+            missing_info.append("location")
     else:
         location = ', '.join([l.text for l in loc])
+        LOCATION_CACHE[task_str] = location
     # special keywords that requires specification
     if set(task_str.split()).intersection(set(["exam", "bill", "submit", "complete", "apply", "close", "open", "start"])):
         # request for deadline
