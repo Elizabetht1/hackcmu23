@@ -4,7 +4,8 @@ from spacy.matcher import Matcher
 from spacy.util import filter_spans
 from pprint import pprint
 from intent import *
-import datetime, dateparser
+import datetime
+import dateparser
 import pdb
 
 if not spacy.util.is_package("en_core_web_lg"):
@@ -26,6 +27,9 @@ LABELS = [
     "apply",
     "pay"
 ]
+DURATION_CACHE = {}
+LOCATION_CACHE = {}
+
 
 class Task(object):
     def __init__(self, text, task_str, duration, location, start_time=None, deadline=None):
@@ -57,6 +61,7 @@ class Task(object):
         s += f"[{'NA' if self.start_time is None else self.start_time}] before "
         s += f"[{'NA' if self.deadline is None else self.deadline}]"
         return s
+
 
 def extract_entity(text):
     doc = NLP(text)
@@ -98,6 +103,7 @@ def extract_entity(text):
     )
     return task
 
+
 def parse_task(text):
     doc = NLP(text)
     time = [ent for ent in doc.ents if ent.label_ == "TIME"]
@@ -107,30 +113,40 @@ def parse_task(text):
     # task_str = get_intent(text, [s.text for s in filter_spans(cand_spans) if not any([t.is_stop for t in s])])
     task_str = get_intent(text, LABELS)
     missing_info = []
-    if len(time) == 0:
+    has_duration = False
+    for t in time:
+        idx = doc.text.split().index(t.text.split()[0])
+        if idx >= 1:
+            if doc[idx-1].text in ["at", "on", "from", "in"]:
+                # start time
+                start_time = t.text
+            elif doc[idx-1].text == "for":
+                # duration
+                has_duration = True
+                duration = t.text
+                DURATION_CACHE[task_str] = duration
+            else:
+                # deadline
+                deadline = t.text
+    if has_duration == False:
         # request for time duration
-        print("[INFO] Missing duration.")
-        missing_info.append("duration")
-    else:
-        for t in time:
-            idx = doc.text.split().index(t.text.split()[0])
-            if idx >= 1:
-                if doc[idx-1].text in ["at", "on", "from", "in"]:
-                    # start time
-                    start_time = t.text
-                elif doc[idx-1].text == "for":
-                    # duration
-                    duration = t.text
-                else:
-                    # deadline
-                    deadline = t.text
+        if task_str in DURATION_CACHE:
+            duration = DURATION_CACHE[task_str]
+        else:
+            print("[INFO] Missing duration.")
+            missing_info.append("duration")
+
     loc = [ent for ent in doc.ents if ent.label_ in ["GPE", "ORG"]]
     if len(loc) == 0:
-        # request for location
-        print("[INFO] Missing location.")
-        missing_info.append("location")
+        if task_str in LOCATION_CACHE:
+            location = LOCATION_CACHE[task_str]
+        else:
+            # request for location
+            print("[INFO] Missing location.")
+            missing_info.append("location")
     else:
         location = ', '.join([l.text for l in loc])
+        LOCATION_CACHE[task_str] = location
     # special keywords that requires specification
     if set(task_str.split()).intersection(set(["exam", "bill", "submit", "complete", "apply", "close", "open", "start"])):
         # request for deadline
@@ -143,6 +159,7 @@ def parse_task(text):
     print("[INFO] OK.")
     return task, missing_info
 
+
 def add_info(task_dict, info):
     missing_info = []
     key2label = {
@@ -150,7 +167,7 @@ def add_info(task_dict, info):
         "location": ["GPE", "ORG"],
         "deadline": ["TIME"]
     }
-    for k,v in info.items():
+    for k, v in info.items():
         ans = NLP(v)
         loc = [ent.text for ent in ans.ents if ent.label_ in key2label[k]]
         if len(loc) > 0:
@@ -163,6 +180,7 @@ def add_info(task_dict, info):
             task_dict[k] = None
     task = Task(**task_dict)
     return task, missing_info
+
 
 def request_keyword(keyword, labels):
     ans = NLP(input(f"What is the {keyword}? "))
@@ -180,5 +198,3 @@ if __name__ == "__main__":
             break
         task = extract_entity(text)
         pprint(task.__dict__)
-
-
