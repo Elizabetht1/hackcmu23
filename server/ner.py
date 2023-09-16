@@ -29,7 +29,7 @@ LABELS = [
 DURATION_CACHE = {}
 LOCATION_CACHE = {}
 
-# example = "Go shopping for 2 hours at Giant Eagle on Wednesday."
+# example = "Go shopping for 2 hours at Target Penn Ave on Wednesday."
 
 class Task(object):
     def __init__(self, text, task_str, duration, location, start_time=None, deadline=None, status="incomplete"):

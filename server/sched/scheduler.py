@@ -36,6 +36,7 @@ def propose(request):
                 predicted_start = i
                 break        
         # add_event.add_event(predicted_start, predicted_start + request[2], request[4], request[1], request[5])
+        print(request[2])
         proposal = {
             "start_time": predicted_start, 
             "end_time": predicted_start + request[2],

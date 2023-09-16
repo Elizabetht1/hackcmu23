@@ -40,9 +40,11 @@ def propose():
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
     task = Task(**data["task"])
-    duration = dateparser.parse(task.duration)
+    duration = dateparser.parse(data["task"]["duration"])
     duration = (3600 * duration.hour + 60 * duration.minute + duration.second) // 3600
-    schedule = scheduler.propose([task.start_time, task.location, duration, task.deadline, task.task_str, task.text])
+    deadline = dateparser.parse(data["task"]["deadline"])
+    deadline = (3600 * deadline.hour + 60 * deadline.minute + deadline.second) // 3600
+    schedule = scheduler.propose([task.start_time, task.location, duration, deadline, task.task_str, task.text])
     return {"msg": "success", "schedule": schedule}
 
 @app.route("/schedule", methods=["POST"])
