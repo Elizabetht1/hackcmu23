@@ -2,7 +2,9 @@
 from flask import Flask, request, jsonify
 import json
 from ner import parse_task, add_info, Task
-from sched.scheduler import *
+import sys
+sys.path.insert(0, "sched")
+from scheduler import *
 
 # create the Flask app
 app = Flask(__name__)
@@ -16,9 +18,9 @@ def parse():
     print("parse")
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
-    if data["status"] == "init":
+    if "task" not in data:
         task, missing_info = parse_task(data["text"])
-    elif data["status"] == "add":
+    elif data["task"]["status"] == "incomplete":
         task, missing_info = add_info(data["task"], data["info"])
         # task: previously returned task
         # info: {keywords: phrase}
@@ -31,7 +33,7 @@ def parse():
     print(ret_msg)
     return ret_msg
 
-@app.route("/propose", methods=["GET"])
+@app.route("/propose", methods=["POST"])
 def propose():
     # [TODO] not tested
     print("propose")
@@ -39,7 +41,7 @@ def propose():
     data = json.loads(request.data.decode("utf-8"))
     task = Task(**data["task"])
     schedule = propose([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
-    return {"msg": "success"}
+    return {"msg": "success", "schedule": schedule}
 
 @app.route("/schedule", methods=["POST"])
 def schedule():
@@ -52,5 +54,4 @@ def schedule():
     return {"msg": "success"}
 
 if __name__ == '__main__':
-    # run app in debug mode on port 5000
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5005)

@@ -3,6 +3,8 @@ import get_location
 import get_distance
 import add_event
 
+import dateparser
+
 def propose(request):
     # parse request : Parse from client
     # time, location, duration, deadline, task
@@ -10,8 +12,8 @@ def propose(request):
     if request[0] is not None:
         # add_event.add_event(request[0], request[0] + request[2], request[4], request[1])
         proposal = {
-            "start_time": request[0],
-            "end_time": request[0] + request[2],
+            "start_time": str(request[0]),
+            "end_time": str(request[0] + request[2]),
             "task": request[4],
             "location": request[1],
             "description": request[5]
@@ -44,6 +46,8 @@ def propose(request):
     return proposal
 
 def schedule(sched):
+    sched[0] = dateparser.parse(sched[0])
+    sched[1] = dateparser.parse(sched[1])
     add_event.add_event(*sched)
 
 

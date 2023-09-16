@@ -28,13 +28,14 @@ LABELS = [
 ]
 
 class Task(object):
-    def __init__(self, text, task_str, duration, location, start_time=None, deadline=None):
+    def __init__(self, text, task_str, duration, location, start_time=None, deadline=None, status="incomplete"):
         self.text = text
         self.task_str = task_str
         self.duration = duration
         self.location = location
         self.start_time = start_time
         self.deadline = deadline
+        self.status = status
         if start_time is not None:
             self.start_time = dateparser.parse(start_time)
         if deadline is not None:
@@ -138,7 +139,7 @@ def parse_task(text):
         missing_info.append("deadline")
     task = Task(
         text=text, task_str=task_str, duration=duration, location=location,
-        start_time=start_time, deadline=deadline
+        start_time=start_time, deadline=deadline, status="complete" if len(missing_info) == 0 else "incomplete"
     )
     print("[INFO] OK.")
     return task, missing_info
@@ -161,6 +162,8 @@ def add_info(task_dict, info):
         if k not in task_dict:
             missing_info.append(k)
             task_dict[k] = None
+    if len(missing_info) == 0:
+        task_dict["status"] = "complete"
     task = Task(**task_dict)
     return task, missing_info
 
