@@ -1,7 +1,8 @@
 # import main Flask class and request object
 from flask import Flask, request, jsonify
 import json
-from ner import parse_task, add_info
+from ner import parse_task, add_info, Task
+from sched.scheduler import *
 
 # create the Flask app
 app = Flask(__name__)
@@ -30,12 +31,25 @@ def parse():
     print(ret_msg)
     return ret_msg
 
-@app.route("/schedule", methods=["GET"])
+@app.route("/propose", methods=["GET"])
+def propose():
+    # [TODO] not tested
+    print("propose")
+    print(request.data)
+    data = json.loads(request.data.decode("utf-8"))
+    task = Task(**data["task"])
+    schedule = propose([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
+    return {"msg": "success"}
+
+@app.route("/schedule", methods=["POST"])
 def schedule():
+    # [TODO] not tested
     print("schedule")
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
-    
+    task = Task(**data["task"])
+    schedule([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
+    return {"msg": "success"}
 
 if __name__ == '__main__':
     # run app in debug mode on port 5000

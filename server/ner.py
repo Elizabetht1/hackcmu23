@@ -4,6 +4,7 @@ from spacy.matcher import Matcher
 from spacy.util import filter_spans
 from pprint import pprint
 from intent import *
+import datetime, dateparser
 import pdb
 
 if not spacy.util.is_package("en_core_web_lg"):
@@ -34,6 +35,21 @@ class Task(object):
         self.location = location
         self.start_time = start_time
         self.deadline = deadline
+        if start_time is not None:
+            self.start_time = dateparser.parse(start_time)
+        if deadline is not None:
+            self.deadline = dateparser.parse(deadline)
+        if duration is not None:
+            t1 = dateparser.parse(duration)
+            t2 = datetime.datetime.now()
+            if (t1 - t2).days < 0:
+                # t1 later than t2
+                seconds = (t2-t1).seconds
+            else:
+                seconds = (t1-t2).seconds
+            # self.duration = str(datetime.timedelta(seconds=seconds))
+            self.duration = seconds / 3600
+
     def __str__(self):
         s = ''
         s += f"[{self.task_str}] at [{'NA' if self.location is None else self.location}] for "
