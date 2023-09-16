@@ -10,8 +10,8 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 def get_calender():
     creds = None
 
-    if os.path.exists('data/token.pickle'):
-        with open('data/token.pickle', 'rb') as token:
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
 
     if not creds or not creds.valid:
@@ -19,10 +19,10 @@ def get_calender():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'data/credentials.json', SCOPES)
+                'credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
 
-        with open('data/token.pickle', 'wb') as token:
+        with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
 
     service = build('calendar', 'v3', credentials=creds)

@@ -3,8 +3,9 @@ from flask import Flask, request, jsonify
 import json
 from ner import parse_task, add_info, Task
 import sys
+import dateparser
 sys.path.insert(0, "sched")
-from scheduler import *
+import scheduler
 
 # create the Flask app
 app = Flask(__name__)
@@ -35,22 +36,22 @@ def parse():
 
 @app.route("/propose", methods=["POST"])
 def propose():
-    # [TODO] not tested
     print("propose")
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
     task = Task(**data["task"])
-    schedule = propose([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
+    duration = dateparser.parse(task.duration)
+    duration = (3600 * duration.hour + 60 * duration.minute + duration.second) // 3600
+    schedule = scheduler.propose([task.start_time, task.location, duration, task.deadline, task.task_str, task.text])
     return {"msg": "success", "schedule": schedule}
 
 @app.route("/schedule", methods=["POST"])
 def schedule():
-    # [TODO] not tested
     print("schedule")
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
-    task = Task(**data["task"])
-    schedule([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
+    schedule = data["schedule"]
+    scheduler.schedule([schedule["start_time"], schedule["end_time"], schedule["task"], schedule["location"], schedule["description"]])
     return {"msg": "success"}
 
 if __name__ == '__main__':

@@ -27,6 +27,8 @@ LABELS = [
     "pay"
 ]
 
+# example = "Go shopping for 2 hours at Giant Eagle on Wednesday."
+
 class Task(object):
     def __init__(self, text, task_str, duration, location, start_time=None, deadline=None, status="incomplete"):
         self.text = text
@@ -48,8 +50,8 @@ class Task(object):
                 seconds = (t2-t1).seconds
             else:
                 seconds = (t1-t2).seconds
-            # self.duration = str(datetime.timedelta(seconds=seconds))
-            self.duration = seconds / 3600
+            self.duration = str(datetime.timedelta(seconds=seconds))
+            # self.duration = float(seconds) / 3600
 
     def __str__(self):
         s = ''

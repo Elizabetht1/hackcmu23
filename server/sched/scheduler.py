@@ -46,8 +46,6 @@ def propose(request):
     return proposal
 
 def schedule(sched):
-    sched[0] = dateparser.parse(sched[0])
-    sched[1] = dateparser.parse(sched[1])
     add_event.add_event(*sched)
 
 
