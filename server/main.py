@@ -33,13 +33,14 @@ def parse():
 
 @app.route("/propose", methods=["GET"])
 def propose():
-    # [TODO] not tested
+    # [TODO] not tested – cilent-side must ask user to accept or reject proposal
     print("propose")
     print(request.data)
     data = json.loads(request.data.decode("utf-8"))
     task = Task(**data["task"])
-    schedule = propose([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
-    return {"msg": "success"}
+    proposed_sched = propose([task.start_time, task.location, task.duration, task.deadline, task.task_str, task.text])
+    return proposed_sched
+
 
 @app.route("/schedule", methods=["POST"])
 def schedule():
