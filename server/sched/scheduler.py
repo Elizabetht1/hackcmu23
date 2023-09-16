@@ -41,9 +41,10 @@ def is_outdoor(task_str):
     return False
 
 
-def bad_weather(lat, lon, start_time, check_time):
-    timestamp = int(datetime(start_time.year, start_time.month,
-                    start_time.day, check_time, 0).timestamp())
+def bad_weather(lat, lon, check_time):
+    today = datetime.datetime.now()
+    timestamp = int(datetime.datetime(today.year, today.month,
+                    today.day, check_time, 0).timestamp())
     url = f'http://api.weatherstack.com/current?access_key={API_KEY}&query={lat},{lon}&historical_date={timestamp}'
     response = requests.get(url)
     if response.status_code == 200:
@@ -70,10 +71,26 @@ def propose(request):
         # #get calender
         calender = get_calender.get_calender()
 
+        options = []
+
+        current_hour = datetime.datetime.now().hour
+
+        deadline = 24
+        if request[3]:
+            deadline = request[3]
+
+        for i in range(current_hour, min(24 + 1 - request[2], deadline + 1 - request[2])):
+            ok = True
+            for j in range(i, i+request[2]):
+                if calender[j] is not None:
+                    ok = False
+            if ok:
+                options.append(i)
+
         # add location coordinates
         for (key, value) in calender.items():
             if value is not None:
-                calender[key] = get_location.get_location('Rashid Auditorium')
+                calender[key] = get_location.get_location(value)
 
         (lat, lon) = get_location.get_location(request[1])
         if lat == None or lon == None:
@@ -84,18 +101,6 @@ def propose(request):
             COORD_CACHE[request[1]] = (lat, lon)
         else:
             location_usage = False
-
-        options = []
-
-        current_hour = datetime.datetime.now().hour
-
-        for i in range(current_hour, min(24 + 1 - request[2], request[3] + 1 - request[2])):
-            ok = True
-            for j in range(i, i+request[2]):
-                if calender[j] is not None:
-                    ok = False
-            if ok:
-                options.append(i)
 
         predicted_start = options[0]
 
@@ -111,7 +116,7 @@ def propose(request):
 
             if is_outdoor(request[4]):
                 for i in range(len(options)):
-                    if bad_weather(lat, lon, request[0], options[i]) == False:
+                    if bad_weather(lat, lon, options[i]) == False:
                         predicted_start = options[i]
                         break
 

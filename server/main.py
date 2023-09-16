@@ -31,8 +31,24 @@ def parse():
         "task": task.__dict__,
         "missing": missing_info
     }
-    print(ret_msg)
-    return ret_msg
+    if task.status == "complete":
+        print(ret_msg)
+        ret_dict = get_schedule(task)
+    else:
+        ret_dict = ret_msg
+    print(ret_dict)
+    return ret_dict
+
+def get_schedule(task):
+    # task = Task(**data["task"])
+    duration = dateparser.parse(task.duration)
+    duration = (3600 * duration.hour + 60 * duration.minute + duration.second) // 3600
+    deadline = task.deadline
+    if deadline is not None:
+        deadline = (3600 * deadline.hour + 60 * deadline.minute + deadline.second) // 3600
+    schedule = scheduler.propose([task.start_time, task.location, duration, deadline, task.task_str, task.text])
+    msg_str = f"Add {schedule['task'].upper()} from {schedule['start_time']} to {schedule['end_time']} @{schedule['location']}?"
+    return {"msg": msg_str, "schedule": schedule}
 
 @app.route("/propose", methods=["POST"])
 def propose():
@@ -45,7 +61,8 @@ def propose():
     deadline = dateparser.parse(data["task"]["deadline"])
     deadline = (3600 * deadline.hour + 60 * deadline.minute + deadline.second) // 3600
     schedule = scheduler.propose([task.start_time, task.location, duration, deadline, task.task_str, task.text])
-    return {"msg": "success", "schedule": schedule}
+    msg_str = f"Add {schedule['task'].upper()} from {schedule['start_time']} to {schedule['end_time']} @{schedule['location']}?"
+    return {"msg": msg_str, "schedule": schedule}
 
 @app.route("/schedule", methods=["POST"])
 def schedule():
@@ -54,7 +71,8 @@ def schedule():
     data = json.loads(request.data.decode("utf-8"))
     schedule = data["schedule"]
     scheduler.schedule([schedule["start_time"], schedule["end_time"], schedule["task"], schedule["location"], schedule["description"]])
-    return {"msg": "success"}
+    msg_str = f"Scheduled {schedule['task'].upper()} from {schedule['start_time']} to {schedule['end_time']} @{schedule['location']}."
+    return {"msg": msg_str}
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5005)
+    app.run(debug=True, port=5000)

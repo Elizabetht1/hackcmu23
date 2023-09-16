@@ -32,7 +32,11 @@ def add_event(start_index, end_index, task, location, description):
     current_date = datetime.now().date()
 
     start_time = datetime(current_date.year, current_date.month, current_date.day, start_index, 0, 0).isoformat()
-    end_time = datetime(current_date.year, current_date.month, current_date.day, end_index, 0, 0).isoformat()
+    next_day = 0
+    if end_index >=24:
+        end_index -= 24
+        next_day = 1
+    end_time = datetime(current_date.year, current_date.month, current_date.day + next_day, end_index, 0, 0).isoformat()
 
     event = {
         'summary': task,

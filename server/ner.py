@@ -29,7 +29,7 @@ LABELS = [
 DURATION_CACHE = {}
 LOCATION_CACHE = {}
 
-# example = "Go shopping for 2 hours at Target Penn Ave on Wednesday."
+# example = "Go shopping for 2 hours at Penn Avenue on Wednesday."
 
 class Task(object):
     def __init__(self, text, task_str, duration, location, start_time=None, deadline=None, status="incomplete"):
@@ -40,11 +40,11 @@ class Task(object):
         self.start_time = start_time
         self.deadline = deadline
         self.status = status
-        if start_time is not None:
+        if start_time is not None and start_time != "None":
             self.start_time = dateparser.parse(start_time)
-        if deadline is not None:
+        if deadline is not None and deadline != "None":
             self.deadline = dateparser.parse(deadline)
-        if duration is not None:
+        if duration is not None and duration != "None":
             t1 = dateparser.parse(duration)
             t2 = datetime.datetime.now()
             if (t1 - t2).days < 0:
@@ -174,6 +174,10 @@ def add_info(task_dict, info):
             task_dict[k] = ', '.join(loc)
         else:
             task_dict[k] = ans.text
+        if k == "location":
+            LOCATION_CACHE[task_dict["task_str"]] = task_dict[k]
+        if k == "duration":
+            DURATION_CACHE[task_dict["task_str"]] = task_dict[k]
     for k in key2label.keys():
         if k not in task_dict:
             missing_info.append(k)
